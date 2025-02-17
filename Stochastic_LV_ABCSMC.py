@@ -68,7 +68,6 @@ def simulate_repressilator_deterministic(theta, t_obs, noise_std=0.5):
 
 
 def gillespie_repressilator(theta, t_obs, noise_std=0.5):
-    # Placeholder remains unchanged
     alpha0, n, beta, alpha = theta
     y0 = [0, 2, 0, 1, 0, 3]
     sol = odeint(repressilator_deterministic, y0, t_obs, args=(alpha0, n, beta, alpha), atol=1e-8, rtol=1e-8)
@@ -86,8 +85,8 @@ def distance(sim_data, observed_data):
 
 # ABC SMC Algorithm for Model Selection
 def abc_smc_model_selection(N, T, epsilons, models, model_prior, observed_data, t_obs):
-    particles = []  # Each entry is a dict {model: array of particles}
-    weights = []     # Each entry is a dict {model: array of weights}
+    particles = []
+    weights = []
 
     # Population 0: Sample from priors
     current_particles = {m: [] for m in range(len(models))}
@@ -111,7 +110,7 @@ def abc_smc_model_selection(N, T, epsilons, models, model_prior, observed_data, 
     particles.append(current_particles)
     weights.append(current_weights)
 
-    # Subsequent populations
+    # populations
     for t in range(1, T):
         print(f"Processing population {t}/{T-1}")
         new_particles = {m: [] for m in range(len(models))}
@@ -172,12 +171,12 @@ def abc_smc_model_selection(N, T, epsilons, models, model_prior, observed_data, 
 if __name__ == "__main__":
     # Define models
     models = [
-        {   # Model 0: Standard LV with a, b
+        {   # Model 0: Deterministic LV
             'simulate': simulate_model1,
             'priors': [uniform(loc=0.5, scale=1.5), uniform(loc=0.5, scale=1.5)],
             'kernel_sigma': [0.1, 0.1]
         },
-        {   # Model 1: Modified LV with a, b, c (extra parameter)
+        {   # Model 1: Stochastic LV
             'simulate': simulate_model2,
             'priors': [uniform(loc=0.5, scale=1.5), uniform(loc=0.5, scale=1.5), uniform(loc=0.1, scale=0.3)],
             'kernel_sigma': [0.1, 0.1, 0.05]
