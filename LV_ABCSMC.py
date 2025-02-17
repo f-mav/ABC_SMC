@@ -4,13 +4,12 @@ from scipy.stats import uniform, norm
 import matplotlib.pyplot as plt
 
 
-# Define the dynamical system (Lotka-Volterra model)
+# Lotka-Volterra model
 def lotka_volterra(y, t, a, b):
     x, y_pred = y
     dxdt = a * x - x * y_pred
     dydt = b * x * y_pred - y_pred
     return [dxdt, dydt]
-
 
 # Simulate data using the model
 def simulate_data(theta, t_obs, noise_std=0.5):
@@ -21,19 +20,17 @@ def simulate_data(theta, t_obs, noise_std=0.5):
     noisy_sol = sol + np.random.normal(0, noise_std, sol.shape)
     return noisy_sol.flatten()  # Flatten for distance calculation
 
-
-# Distance function (sum of squared errors)
 def distance(sim_data, observed_data):
     return np.sum((sim_data - observed_data) ** 2)
 
 
 # ABC SMC Algorithm
 def abc_smc(N, T, epsilons, prior_a, prior_b, kernel_sigma, observed_data, t_obs):
-    # Initialize particles and weights
+    # Initialize
     particles = []
     weights = []
 
-    # Population 0: Sample from prior
+    # Sample from prior
     current_particles = []
     current_weights = []
     while len(current_particles) < N:
@@ -48,26 +45,25 @@ def abc_smc(N, T, epsilons, prior_a, prior_b, kernel_sigma, observed_data, t_obs
     particles.append(np.array(current_particles))
     weights.append(current_weights)
 
-    # Subsequent populations
+    #S3
     for t in range(1, T):
         print(f"Processing population {t}/{T - 1}")
         new_particles = []
         new_weights = []
         for _ in range(N):
-            # Sample from previous population with weights
+            # Sample from previous population
             idx = np.random.choice(len(particles[t - 1]), p=weights[t - 1])
             a_prev, b_prev = particles[t - 1][idx]
 
-            # Perturb parameters with Gaussian kernel
+            # Perturb
             a_proposed = a_prev + np.random.normal(0, kernel_sigma[0])
             b_proposed = b_prev + np.random.normal(0, kernel_sigma[1])
 
-            # Check prior bounds (uniform prior)
+            # Check prior
             if not (prior_a.ppf(0) <= a_proposed <= prior_a.ppf(1) and
                     prior_b.ppf(0) <= b_proposed <= prior_b.ppf(1)):
                 continue
 
-            # Simulate data
             sim_data = simulate_data((a_proposed, b_proposed), t_obs)
             if distance(sim_data, observed_data) <= epsilons[t]:
                 # Calculate weight
@@ -91,7 +87,7 @@ def abc_smc(N, T, epsilons, prior_a, prior_b, kernel_sigma, observed_data, t_obs
             particles.append(np.array(new_particles))
             weights.append(new_weights)
         else:
-            # If no particles accepted, retain previous (not ideal but handle edge case)
+            # If no particles accepted
             particles.append(particles[t - 1])
             weights.append(weights[t - 1])
     return particles, weights
@@ -107,10 +103,10 @@ if __name__ == "__main__":
     # ABC SMC parameters
     N = 1000 # Number of particles per population
     T = 5  # Number of populations
-    epsilons = [30.0, 16.0, 6.0, 5.0, 4.3]  # Tolerance sequence
-    prior_a = uniform(loc=0.5, scale=1.5)  # Uniform prior for a around true value
+    epsilons = [30.0, 16.0, 6.0, 5.0, 4.3]
+    prior_a = uniform(loc=0.5, scale=1.5)  # Uniform prior for a
     prior_b = uniform(loc=0.5, scale=1.5)  # Uniform prior for b
-    kernel_sigma = [0.1, 0.1]  # Perturbation kernel std dev for a and b
+    kernel_sigma = [0.1, 0.1]  # Perturbation kernel
 
     # Run ABC SMC
     particles, weights = abc_smc(N, T, epsilons, prior_a, prior_b, kernel_sigma, observed_data, t_obs)
@@ -167,7 +163,7 @@ if __name__ == "__main__":
 
     # Modified main section to include true trajectory and plotting
     if __name__ == "__main__":
-        # Generate true trajectory and observed data
+        # Generate REAL and observed data
         t_obs = np.linspace(0, 15, 8)
         true_theta = (1.0, 1.0)
         true_trajectory = simulate_data(true_theta, t_obs, noise_std=0.0)
@@ -186,8 +182,6 @@ if __name__ == "__main__":
 
         # Plot results
         plot_results(observed_data, true_trajectory, t_obs, particles, weights, populations_to_plot=[0, -1])
-
-        # Additional plot: Parameter distributions across populations
         plt.figure(figsize=(12, 6))
         for t in range(len(particles)):
             if len(particles[t]) > 0:

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from stoch_lv import gillespie_lv
 
 
-# Define Lotka-Volterra models (Model 0 remains deterministic)
+# Lotka-Volterra model deterministic
 def lotka_volterra_model1(y, t, a, b):
     """Standard LV model with parameters a, b."""
     x, y_pred = y
@@ -22,6 +22,7 @@ def simulate_model1(theta, t_obs, noise_std=0.5):
     return noisy_sol.flatten()
 
 
+# Lotka-Volterra model stochastic
 def simulate_model2(theta, t_obs, noise_std=0.5):
     """Stochastic LV model using Gillespie algorithm."""
     c1, c2, c3 = theta
@@ -47,7 +48,7 @@ def simulate_model2(theta, t_obs, noise_std=0.5):
     return noisy_combined.flatten()
 
 
-# Repressilator models remain unchanged
+# Repressilator models
 def repressilator_deterministic(y, t, alpha0, n, beta, alpha):
     m1, p1, m2, p2, m3, p3 = y
     dm1dt = -m1 + alpha / (1 + p3 ** n) + alpha0
@@ -198,20 +199,20 @@ if __name__ == "__main__":
     t_obs = np.linspace(0, 15, 8)
     observed_data = {
         0: simulate_model1((1.0, 1.0), t_obs, noise_std=0.5),  # Model 0: LV with a=1.0, b=1.0
-        1: simulate_model2((1.0, 1.0, 0.2), t_obs, noise_std=0.5),  # Model 1: LV with a=1.0, b=1.0, c=0.2
+        1: simulate_model2((1.0, 1.0, 0.2), t_obs, noise_std=0.5),  # Model 1: LV with c1=1.0, c2=1.0, c3=0.2
         2: simulate_repressilator_deterministic((1, 2, 5, 1000), t_obs, noise_std=0.5),  # Model 2: Repressilator
         3: simulate_repressilator_stochastic((1, 2, 5, 1000), t_obs, noise_std=0.5)  # Model 3: Stochastic repressilator
     }
 
     # ABC SMC parameters
-    N = 1000  # Number of particles per population
+    N = 1000  # Number of particles
     T = 5     # Number of populations
     epsilons = [50.0, 30.0, 20.0, 10.0, 5.0]
 
     # Run ABC SMC for model selection
     particles, weights = abc_smc_model_selection(N, T, epsilons, models, model_prior, observed_data, t_obs)
 
-    # Analyze results
+    # results
     final_particles = particles[-1]
     final_weights = weights[-1]
     model_counts = {m: len(final_particles.get(m, [])) for m in range(len(models))}
@@ -220,7 +221,7 @@ if __name__ == "__main__":
     for m in range(len(models)):
         print(f"Model {m}: {model_counts[m]/total:.2%}")
 
-    # Plotting parameter distributions for each model (example for Model 2)
+    # Plotting parameter distributions for each model
     if 2 in final_particles and len(final_particles[2]) > 0:
         params_model2 = np.array(final_particles[2])
         print("\nParameters for Model 2 (alpha0, n, beta, alpha):")
